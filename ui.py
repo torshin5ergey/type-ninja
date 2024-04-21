@@ -38,20 +38,23 @@ def display_stats(stdscr):
     # TODO: time
     pass
 
-def display_game(stdscr, user:str, typed_words:list[str], to_type_words:list[str]):
+def display_task(stdscr, user:str, typed_words:list[str], to_type_words:list[str]):
     typed = " ".join(typed_words)
     to_type = " ".join(to_type_words)
     # Display dim typed text
-    dim_string_length = (width // 2) - len(typed) - len(user) - 1
-    stdscr.addstr(4, max(0, dim_string_length), typed[max(0, -dim_string_length):],curses.color_pair(2) | curses.A_DIM)
+    dim_length = (width // 2) - len(typed) - len(user) - 1
+    stdscr.addstr(4, max(0, dim_length), typed[max(0, -dim_length):], curses.color_pair(2) | curses.A_DIM)
     # Display text to type
-    stdscr.addstr(4, width // 2 - len(user), to_type[:width//2+len(user)])
-
+    right = min(width, width//2+len(user)) # Right slice border
+    stdscr.addstr(4, max(0, width // 2 - len(user)), to_type[:right])
     pass
 
-def display_user_input(stdscr, user_input:str):
+def display_user_input(stdscr, user:str, correct:bool):
+    # Set text color depends on the correctness
+    color = curses.color_pair(3) if not correct else 0
+    left = max(0, -((width // 2)-len(user))) # Left print slice start
+    stdscr.addstr(5, max(0, (width // 2) - len(user)), user[left:], color)
     stdscr.move(5, width // 2)
-    stdscr.addstr(5, (width // 2) - len(user_input), user_input)
 
 def display_time():
     pass

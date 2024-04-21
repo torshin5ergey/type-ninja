@@ -18,8 +18,14 @@ def get_user_iunput(stdscr, user_input:str):
         user_input += chr(char)
     return user_input
 
+def is_correct_input(user, task) -> bool:
+    if user == task[:len(user)]:
+        return True
+    else:
+        return False
+
 def main(stdscr):
-    global typed, text
+    global typed, text, is_correct
     # curses.curs_set(0)
     stdscr.clear()
     curses.curs_set(False)
@@ -44,13 +50,15 @@ def main(stdscr):
     
             typed = [] # Typed words (after space)
             user_input = '' # Current typed word
+            is_correct = True
 
             while True:
                     stdscr.clear()
                     ui.display_title(stdscr)
-                    ui.display_game(stdscr, user_input, typed, text)
-                    ui.display_user_input(stdscr, user_input)
+                    ui.display_task(stdscr, user_input, typed, text)
+                    ui.display_user_input(stdscr, user_input, is_correct)
                     user_input = get_user_iunput(stdscr, user_input)
+                    is_correct = is_correct_input(user_input, text[0])
                     stdscr.refresh()
                     start_time = time.time()
             curses.noecho()
