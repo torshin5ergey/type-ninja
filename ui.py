@@ -1,5 +1,6 @@
 # CLI
 import curses
+import time
 
 '''
 x = width // 2 - len("Hello, world!") // 2
@@ -56,5 +57,7 @@ def display_user_input(stdscr, user:str, correct:bool):
     stdscr.addstr(5, max(0, (width // 2) - len(user)), user[left:], color)
     stdscr.move(5, width // 2)
 
-def display_time():
+def display_time(stdscr, start:float):
+    remaining = 60 - (time.time() - start)
+    stdscr.addstr(7, (width // 2) - len(str(remaining))//2, str(remaining))
     pass

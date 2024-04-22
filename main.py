@@ -52,15 +52,17 @@ def main(stdscr):
             user_input = '' # Current typed word
             is_correct = True
 
+            start_time = time.time()
             while True:
                     stdscr.clear()
                     ui.display_title(stdscr)
                     ui.display_task(stdscr, user_input, typed, text)
+                    ui.display_time(stdscr, start_time)
                     ui.display_user_input(stdscr, user_input, is_correct)
                     user_input = get_user_iunput(stdscr, user_input)
                     is_correct = is_correct_input(user_input, text[0])
                     stdscr.refresh()
-                    start_time = time.time()
+
             curses.noecho()
 
 
