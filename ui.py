@@ -8,14 +8,17 @@ y = height // 2
 stdscr.addstr(y, x, "Hello, world!")
 '''
 
-def get_window_size(stdscr):
-    # Get window size
-    global height, width
-    height, width = stdscr.getmaxyx()
+def init_colorpairs(stdscr):
     # Color pairs. name, FG, BG
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE) # Menu title
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK) # Correct text
     curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK) # Incorrect text
+
+def get_window_size(stdscr):
+    # Get window size
+    global height, width
+    height, width = stdscr.getmaxyx()
+    return height, width
 
 def display_title(stdscr):
     # Top title
@@ -44,7 +47,7 @@ def display_task(stdscr, user:str, typed_words:list[str], to_type_words:list[str
     to_type = " ".join(to_type_words)
     # Display dim typed text
     dim_length = (width // 2) - len(typed) - len(user) - 1
-    stdscr.addstr(4, max(0, dim_length), typed[max(0, -dim_length):], curses.color_pair(2) | curses.A_DIM)
+    stdscr.addstr(4, max(0, dim_length), typed[max(0, -dim_length):], curses.A_DIM | curses.color_pair(2))
     # Display text to type
     right = min(width, width//2+len(user)) # Right slice border
     stdscr.addstr(4, max(0, width // 2 - len(user)), to_type[:right])
@@ -57,7 +60,9 @@ def display_user_input(stdscr, user:str, correct:bool):
     stdscr.addstr(5, max(0, (width // 2) - len(user)), user[left:], color)
     stdscr.move(5, width // 2)
 
-def display_time(stdscr, start:float):
-    remaining = 60 - (time.time() - start)
-    stdscr.addstr(7, (width // 2) - len(str(remaining))//2, str(remaining))
+def display_time(stdscr, time:float):
+    time = str(time).rjust(2)
+    stdscr.addstr(2, (width // 2) - len(time)//2, time)
+    stdscr.move(5, width // 2)
+    stdscr.refresh()
     pass
