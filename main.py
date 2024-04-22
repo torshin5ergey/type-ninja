@@ -13,8 +13,8 @@ def get_user_input(stdscr, user_input:str):
         if len(user_input) > 0:
             user_input = user_input[:-1]
     elif char == 32: # space
-        typed.append(user_input)
-        del text[0]
+        user_typed.append(user_input)
+        task_typed.append(text.pop(0))
         return ''
     else:
         user_input += chr(char)
@@ -34,62 +34,78 @@ def time_counter(stdscr, start:float):
         ui.display_time(stdscr, remaining)
         time.sleep(.01)
 
-def main(stdscr):
-    global typed, text, is_correct, timer
-    # curses.curs_set(0)
-    stdscr.clear()
-    curses.curs_set(False)
-    curses.start_color()
-    ui.init_colorpairs(stdscr)
-    # Menu
-    width, height = ui.get_window_size(stdscr)
-    ui.display_title(stdscr)
-    ui.display_controls(stdscr)
-    stdscr.refresh()
+def calculate_stats(typed_words, time, text):
+    typed_text = " ".join(typed_words)
+    typed_chars = len(typed_text)
+    typed_words_count = len(typed_words)
+    text_length = len(" ".join(text))
 
+    wpm = round((typed_words_count / time) * 60)
+    mistakes = sum(1 for i, j in zip(typed_text, ' '.join(text)) if i != j)
+    accuracy = round(((typed_chars - mistakes) / typed_chars) * 100, 2)
+    return wpm, accuracy, mistakes
+
+def main(stdscr):
+    global user_typed, text, is_correct, timer, task_typed
     # Main menu loop
     while True:
-        key = stdscr.getch()
-        if key == 24:
-            break
-        elif key == 18:
+            # curses.curs_set(0)
             stdscr.clear()
-            text = text_generator.get_random_word()
-
-            curses.curs_set(True)
-            curses.echo()
-
-            typed = [] # Typed words (after space)
-            user_input = '' # Current typed word
-            is_correct = True
-
-            timer = 10 # sec
-
-            # Before start
-            '''
+            curses.curs_set(False)
+            curses.start_color()
+            ui.init_colorpairs(stdscr)
+            # Menu
+            width, height = ui.get_window_size(stdscr)
             ui.display_title(stdscr)
-            ui.display_task(stdscr, user_input, typed, text)
-            stdscr.addstr(2, width, str(timer))
-            stdscr.move(5, width)
+            ui.display_controls(stdscr)
             stdscr.refresh()
-            user_input = chr(stdscr.getch())
-            is_correct = is_correct_input(user_input, text[0])
-            '''
-            start_time = time.time()
-            time_thread = threading.Thread(target=time_counter, args=(stdscr, start_time), daemon=True)
-            time_thread.start()
-            stdscr.refresh()
-            while time_thread.is_alive():
-                    stdscr.clear()
-                    ui.display_title(stdscr)
-                    ui.display_task(stdscr, user_input, typed, text)
-                    ui.display_user_input(stdscr, user_input, is_correct)
-                    stdscr.refresh()
-                    user_input = get_user_input(stdscr, user_input)
-                    is_correct = is_correct_input(user_input, text[0])
+            key = stdscr.getch()
+            if key == 24:
+                break
+            elif key == 18:
+                stdscr.clear()
+                text = text_generator.get_random_word()
 
-            stdscr.clear()
-            curses.noecho()
+                curses.curs_set(True)
+                curses.echo()
+
+                user_typed = [] # Typed words (after space)
+                task_typed = [] # Original words, that user done
+                user_input = '' # Current typed word
+                is_correct = True
+
+                timer = 60 # sec
+
+                # Before start
+                '''
+                ui.display_title(stdscr)
+                ui.display_task(stdscr, user_input, user_typed, text)
+                stdscr.addstr(2, width, str(timer))
+                stdscr.move(5, width)
+                stdscr.refresh()
+                user_input = chr(stdscr.getch())
+                is_correct = is_correct_input(user_input, text[0])
+                '''
+
+                start_time = time.time()
+                time_thread = threading.Thread(target=time_counter, args=(stdscr, start_time), daemon=True)
+                time_thread.start()
+                stdscr.refresh()
+                while time_thread.is_alive():
+                        stdscr.clear()
+                        ui.display_title(stdscr)
+                        ui.display_task(stdscr, user_input, user_typed, task_typed, text)
+                        ui.display_user_input(stdscr, user_input, is_correct)
+                        stdscr.refresh()
+                        user_input = get_user_input(stdscr, user_input)
+                        is_correct = is_correct_input(user_input, text[0])
+
+
+                wpm, accuracy, mistakes = calculate_stats(user_typed, timer, task_typed)
+                stdscr.addstr(10, 0, f'typed: {user_typed}, timer: {timer}, text: {task_typed}')
+                stdscr.addstr(15, 0, f'WPM: {wpm}, Accuracy: {accuracy}%, Mistakes: {mistakes}')
+                stdscr.refresh()
+                key = stdscr.getch()
 
 
 curses.wrapper(main)

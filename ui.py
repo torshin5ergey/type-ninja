@@ -42,12 +42,21 @@ def display_stats(stdscr):
     # TODO: time
     pass
 
-def display_task(stdscr, user:str, typed_words:list[str], to_type_words:list[str]):
-    typed = " ".join(typed_words)
-    to_type = " ".join(to_type_words)
+def display_task(stdscr, user:str, user_typed:list[str], task_typed:list[str], task_to_type:list[str]):
+    typed = " ".join(user_typed)
+    to_type = " ".join(task_to_type)
     # Display dim typed text
     dim_length = (width // 2) - len(typed) - len(user) - 1
+    
     stdscr.addstr(4, max(0, dim_length), typed[max(0, -dim_length):], curses.A_DIM | curses.color_pair(2))
+    '''
+    cursor = dim_length
+    for i, v in enumerate(user_typed):
+        color = curses.color_pair(2) if v == task_typed[i] else curses.color_pair(3)
+        stdscr.addstr(4, max(0, cursor), typed[max(0, -cursor):], curses.A_DIM | color)
+        cursor += len(v) + 1
+    '''
+
     # Display text to type
     right = min(width, width//2+len(user)) # Right slice border
     stdscr.addstr(4, max(0, width // 2 - len(user)), to_type[:right])
