@@ -7,6 +7,7 @@ x = width // 2 - len("Hello, world!") // 2
 y = height // 2
 stdscr.addstr(y, x, "Hello, world!")
 '''
+table_width = 55
 
 def init_colorpairs(stdscr):
     # Color pairs. name, FG, BG
@@ -35,14 +36,21 @@ def display_controls(stdscr):
     stdscr.addstr(height-1, 10, "^R", curses.color_pair(1))
     stdscr.addstr(" Start")
 
-def display_stats(stdscr):
-    #stdscr.addstr(height-1, 0, "Q", curses.color_pair(1))
+# wpm, c_accuracy, w_accuracy, w_incorrect, time
+def display_stats(stdscr, wpm:int, ch_acc:float, c_inc:int, w_acc:float, w_inc:int) -> None:
+    str_wpm = str(wpm).rjust(3)
+    str_ch_acc = str(ch_acc).rjust(5)
+    stdscr.addstr(7, width//2 - table_width//2, f"|                        wpm  {str_wpm}                     |", curses.A_BOLD)
+    stdscr.addstr(8, width//2 - table_width//2, "|-----------------------------------------------------|")
+    stdscr.addstr(9, width//2 - table_width//2, f"|   char accuracy | {str_ch_acc}% |    word accuracy| {str(w_acc).rjust(5)}% |")
+    stdscr.addstr(10, width//2 - table_width//2, f"| incorrect chars | {str(c_inc).rjust(5)}  | incorrect words | {str(w_inc).rjust(5)}  |")
+
     # TODO: wpm
     # TODO: acc
     # TODO: time
     pass
 
-def display_task(stdscr, user:str, user_typed:list[str], task_typed:list[str], task_to_type:list[str]):
+def display_task(stdscr, user:str, user_typed:list[str], task_typed:list[str], task_to_type:list[str]) -> None:
     typed = " ".join(user_typed)
     to_type = " ".join(task_to_type)
     # Display dim typed text
