@@ -6,14 +6,24 @@ import text_generator
 
 KEY_EXIT = 24 # ^X exit
 KEY_START = 18 # ^R start
+KEY_HELP = 263 # ^H help
+KEY_ENTER = 10 # enter
 KEY_BACKSPACE_UNX = 127 # backspace
 KEY_BACKSPACE_WND = 8 # backspace
 KEY_SPACE = 32 # space
 
+# Exception class for exiting started test
+class EndTestException(Exception):
+    def __init__(self, message=''):
+        self.message = message
+        super().__init__(self.message)
+
 def get_user_input(stdscr, user_input:str, user_typed:list[str], task:list[str], task_typed:list[str]) -> tuple:
     curses.cbreak()
     char = stdscr.getch()
-    if (char == curses.KEY_BACKSPACE or char == KEY_BACKSPACE_UNX or char == KEY_BACKSPACE_WND):
+    if char == KEY_ENTER:
+        raise EndTestException
+    elif (char == curses.KEY_BACKSPACE or char == KEY_BACKSPACE_UNX or char == KEY_BACKSPACE_WND):
         if len(user_input) == 0:
             user_input = ''
         else:
@@ -23,7 +33,10 @@ def get_user_input(stdscr, user_input:str, user_typed:list[str], task:list[str],
         task_typed.append(task.pop(0))
         user_input = ''
     else:
-        user_input += chr(char)
+        try:
+            user_input += chr(char)
+        except ValueError:
+            return '', task, task_typed
     return user_input, task, task_typed
 
 def is_correct_input(user_input:str, task) -> bool:
@@ -32,14 +45,14 @@ def is_correct_input(user_input:str, task) -> bool:
     else:
         return False
 
-def time_counter(stdscr, start:float) -> None:
-    global remaining
-    while True:
+def time_counter(stdscr, width, height, start:float) -> None:
+    global remaining, stop_flag
+    while not stop_flag:
         remaining = round(timer - (time.time() - start))
         if remaining < 0:
             break
-        ui.display_time(stdscr, remaining)
-        time.sleep(.01)
+        ui.display_time(stdscr, width, height, remaining)
+        time.sleep(.1)
 
 def calculate_stats(typed_words:list[str], task:list[str], remaining:int) -> tuple:
     # User typed words stats
@@ -79,7 +92,7 @@ def calculate_stats(typed_words:list[str], task:list[str], remaining:int) -> tup
     return wpm, char_accuracy, total_incorrect_chars, words_accuracy, words_incorrect
 
 def main(stdscr):
-    global timer, remaining
+    global timer, remaining, stop_flag
     # Main menu loop
     while True:
             stdscr.clear()
@@ -89,13 +102,23 @@ def main(stdscr):
             ui.init_colorpairs(stdscr)
             # Menu
             width, height = ui.get_window_size(stdscr)
-            ui.display_title(stdscr)
-            ui.display_controls(stdscr)
+            ui.display_title(stdscr, width, height)
+            ui.display_mainscreen(stdscr, width, height)
+            ui.display_controls(stdscr, width, height, 'default')
             stdscr.refresh()
 
             key = stdscr.getch()
             if key == KEY_EXIT:
                 break
+            elif key == KEY_HELP:
+                stdscr.clear()
+                ui.display_title(stdscr, width, height)
+                ui.display_help(stdscr, width, height)
+                ui.display_controls(stdscr, width, height, 'enter')
+                while True:
+                    key = stdscr.getch()
+                    if key == KEY_ENTER:
+                        break
             elif key == KEY_START:
                 stdscr.clear()
                 text = text_generator.get_random_word()
@@ -114,21 +137,29 @@ def main(stdscr):
                 start_time = time.time()
 
                 # Start time display thread
-                time_thread = threading.Thread(target=time_counter, args=(stdscr, start_time), daemon=True)
+                stop_flag = False
+                time_thread = threading.Thread(target=time_counter, args=(stdscr, width, height, start_time), daemon=True)
                 time_thread.start()
 
                 stdscr.refresh()
                 while time_thread.is_alive():
                     stdscr.clear()
-                    ui.display_title(stdscr)
+                    width, height = ui.get_window_size(stdscr)
+                    ui.display_title(stdscr, width, height)
+                    ui.display_controls(stdscr, width, height, 'enter')
                     wpm, ch_accuracy, ch_incorrect, word_accuracy, words_incorrect = calculate_stats(user_typed, task_typed, remaining)
-                    ui.display_stats(stdscr, wpm, ch_accuracy, ch_incorrect, word_accuracy, words_incorrect)
-                    ui.display_task(stdscr, user_input, user_typed, task_typed, text)
-                    ui.display_user_input(stdscr, user_input, is_correct)
+                    ui.display_stats(stdscr, width, height, wpm, ch_accuracy, ch_incorrect, word_accuracy, words_incorrect)
+                    ui.display_task(stdscr, width, height, user_input, user_typed, task_typed, text)
+                    ui.display_user_input(stdscr, width, height, user_input, is_correct)
                     stdscr.refresh()
-                    user_input, text, task_typed = get_user_input(stdscr, user_input, user_typed, text, task_typed)
+                    try:
+                        user_input, text, task_typed = get_user_input(stdscr, user_input, user_typed, text, task_typed)
+                    except EndTestException:
+                        stop_flag = True
+                        break
                     is_correct = is_correct_input(user_input, text[0])
-
-                key = stdscr.getch()
+                
+                if not stop_flag:
+                    key = stdscr.getch()
 
 curses.wrapper(main)
